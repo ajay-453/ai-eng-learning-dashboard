@@ -1,0 +1,4 @@
+# local exports / scratch
+*.log
+aiefs-progress.json
+.DS_Store

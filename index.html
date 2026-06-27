@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Engineering from Scratch — Learning Dashboard</title>
+<style>
+  :root{
+    --nord0:#2E3440; --nord1:#3B4252; --nord2:#434C5E; --nord3:#4C566A;
+    --nord4:#D8DEE9; --nord5:#E5E9F0; --nord6:#ECEFF4;
+    --frost1:#8FBCBB; --frost2:#88C0D0; --frost3:#81A1C1; --frost4:#5E81AC;
+    --red:#BF616A; --orange:#D08770; --yellow:#EBCB8B; --green:#A3BE8C; --purple:#B48EAD;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--nord0);color:var(--nord4);line-height:1.5;padding:24px;max-width:1280px;margin:0 auto}
+  h1{font-size:26px;color:var(--nord6);margin-bottom:4px}
+  .sub{color:var(--nord3);font-size:14px;margin-bottom:20px}
+  .sub a{color:var(--frost2);text-decoration:none}
+  .sub a:hover{text-decoration:underline}
+
+  /* overall progress */
+  .overall{background:var(--nord1);border:1px solid var(--nord2);border-radius:12px;padding:20px;margin-bottom:24px;
+    display:flex;align-items:center;gap:24px;flex-wrap:wrap}
+  .ring{--p:0;width:120px;height:120px;border-radius:50%;flex:0 0 auto;
+    background:conic-gradient(var(--green) calc(var(--p)*1%), var(--nord2) 0);
+    display:flex;align-items:center;justify-content:center}
+  .ring .inner{width:92px;height:92px;border-radius:50%;background:var(--nord1);
+    display:flex;flex-direction:column;align-items:center;justify-content:center}
+  .ring .pct{font-size:26px;font-weight:700;color:var(--nord6)}
+  .ring .lbl{font-size:11px;color:var(--nord3)}
+  .stats{display:flex;gap:28px;flex-wrap:wrap;flex:1}
+  .stat .n{font-size:22px;font-weight:700;color:var(--nord6)}
+  .stat .t{font-size:12px;color:var(--nord3);text-transform:uppercase;letter-spacing:.5px}
+  .controls{display:flex;gap:10px;flex-wrap:wrap}
+  button{font-family:inherit;font-size:13px;background:var(--nord2);color:var(--nord4);
+    border:1px solid var(--nord3);border-radius:8px;padding:8px 14px;cursor:pointer}
+  button:hover{background:var(--nord3);color:var(--nord6)}
+
+  .section-title{font-size:13px;text-transform:uppercase;letter-spacing:1px;color:var(--nord3);
+    margin:28px 0 12px}
+
+  /* phase grid */
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:14px}
+  .card{background:var(--nord1);border:1px solid var(--nord2);border-radius:10px;padding:14px 16px;
+    border-left:4px solid var(--c)}
+  .card .top{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+  .card h3{font-size:15px;color:var(--nord6);font-weight:600}
+  .card .ph{font-size:11px;color:var(--nord3);font-weight:700}
+  .card .topics{font-size:12px;color:var(--nord3);margin:6px 0 10px;min-height:32px}
+  .bar{height:8px;background:var(--nord2);border-radius:4px;overflow:hidden;margin-bottom:8px}
+  .bar > span{display:block;height:100%;background:var(--c);width:0;transition:width .25s}
+  .card .row{display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .card .count{font-size:13px;color:var(--nord4)}
+  .card .count b{color:var(--nord6)}
+  .stepper{display:flex;gap:6px;align-items:center}
+  .stepper button{padding:3px 10px;font-weight:700}
+  .done-badge{font-size:11px;color:var(--green);font-weight:700}
+  .mark-all{font-size:11px;padding:3px 8px}
+
+  /* capstone */
+  .cap{background:var(--nord1);border:1px solid var(--frost4);border-radius:12px;padding:18px;margin-top:8px}
+  /* learning path */
+  .path{background:var(--nord1);border:1px solid var(--nord2);border-radius:12px;padding:18px 20px}
+  .path .lead{font-size:13px;color:var(--nord3);margin-bottom:16px}
+  .steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+  .step{background:var(--nord0);border:1px solid var(--nord2);border-radius:10px;padding:14px;
+    border-top:3px solid var(--c)}
+  .step .hd{display:flex;align-items:center;gap:9px;margin-bottom:6px}
+  .step .num{flex:0 0 auto;width:24px;height:24px;border-radius:50%;background:var(--c);color:var(--nord0);
+    font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center}
+  .step h4{font-size:14px;color:var(--nord6)}
+  .step .ph-list{font-size:12px;color:var(--frost2);font-weight:600;margin-bottom:5px}
+  .step p{font-size:12px;color:var(--nord4)}
+  .step.goal{border-top-color:var(--green);background:#323a2e}
+  .arrow{color:var(--nord3);font-weight:700}
+  .cap h2{color:var(--frost2);font-size:18px;margin-bottom:4px}
+  .cap .note{font-size:13px;color:var(--nord3);margin-bottom:14px}
+  .cap .locked{color:var(--orange);font-size:13px;margin-bottom:14px;display:none}
+  .caplist{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:8px}
+  .capitem{display:flex;gap:9px;align-items:flex-start;background:var(--nord0);border:1px solid var(--nord2);
+    border-radius:8px;padding:9px 11px;font-size:13px}
+  .capitem input{margin-top:3px;width:15px;height:15px;accent-color:var(--frost2);cursor:pointer}
+  .capitem.checked{opacity:.6}
+  .capitem.checked label{text-decoration:line-through}
+  .capitem .deps{display:block;font-size:11px;color:var(--nord3);margin-top:2px}
+  .capitem label{cursor:pointer}
+  .track-tag{display:inline-block;font-size:10px;background:var(--frost4);color:var(--nord6);
+    border-radius:4px;padding:1px 5px;margin-left:4px;vertical-align:middle}
+  footer{margin-top:30px;color:var(--nord3);font-size:12px;text-align:center}
+</style>
+</head>
+<body>
+  <h1>AI Engineering from Scratch</h1>
+  <p class="sub">Learning tracker · 503 lessons · 20 phases · ~320 hours ·
+    <a href="https://github.com/rohitg00/ai-engineering-from-scratch" target="_blank">rohitg00/ai-engineering-from-scratch</a></p>
+
+  <div class="overall">
+    <div class="ring" id="ring"><div class="inner"><div class="pct" id="ringPct">0%</div><div class="lbl">complete</div></div></div>
+    <div class="stats">
+      <div class="stat"><div class="n" id="sLessons">0 / 503</div><div class="t">Lessons</div></div>
+      <div class="stat"><div class="n" id="sPhases">0 / 20</div><div class="t">Phases done</div></div>
+      <div class="stat"><div class="n" id="sHours">0h</div><div class="t">Est. invested</div></div>
+      <div class="stat"><div class="n" id="sCap">0 / 26</div><div class="t">Capstones</div></div>
+    </div>
+    <div class="controls">
+      <button onclick="exportData()">Export</button>
+      <button onclick="resetData()">Reset</button>
+    </div>
+  </div>
+
+  <div class="section-title">How to learn it · recommended path to the capstone</div>
+  <div class="path">
+    <p class="lead">You don't need all 20 phases before shipping a capstone. This is the shortest route from zero to a working capstone project. Knock these out in order — the dashboard below tracks your progress against them.</p>
+    <div class="steps">
+      <div class="step" style="--c:var(--red)">
+        <div class="hd"><div class="num">1</div><h4>Anchor</h4></div>
+        <div class="ph-list">P0 → P1 → P3 → P7</div>
+        <p>The conceptual spine: setup, math, backprop from scratch, then Transformers &amp; attention. Skip nothing here.</p>
+      </div>
+      <div class="step" style="--c:var(--frost2)">
+        <div class="hd"><div class="num">2</div><h4>LLM core</h4></div>
+        <div class="ph-list">P10 → P11</div>
+        <p>Build a mini-GPT &amp; tokenizers from scratch, then LLM Engineering: RAG, fine-tuning, function calling, MCP.</p>
+      </div>
+      <div class="step" style="--c:var(--frost4)">
+        <div class="hd"><div class="num">3</div><h4>Agent layer</h4></div>
+        <div class="ph-list">P13 → P14</div>
+        <p>Tools &amp; protocols (MCP servers/clients), then Agent Engineering: the agent loop, memory, LangGraph, evals.</p>
+      </div>
+      <div class="step" style="--c:var(--purple)">
+        <div class="hd"><div class="num">4</div><h4>Ship it</h4></div>
+        <div class="ph-list">P17 + slices of P18</div>
+        <p>Production infra (vLLM, quantization, observability) plus the safety/red-teaming you need for a real deployment.</p>
+      </div>
+      <div class="step goal">
+        <div class="hd"><div class="num" style="background:var(--green)">🎯</div><h4>Capstone</h4></div>
+        <div class="ph-list" style="color:var(--green)">P19</div>
+        <p>Pick one of the 17 below (e.g. terminal coding agent or codebase RAG). Each card lists the phases it draws on.</p>
+      </div>
+    </div>
+    <p class="lead" style="margin:14px 0 0">Tip: clone the repo and run the <b>/find-your-level</b> skill to get a personalized entry point, and <b>/check-understanding &lt;phase&gt;</b> to quiz yourself as you go.</p>
+  </div>
+
+  <div class="section-title">Foundations → Production · the 20-phase path</div>
+  <div class="grid" id="grid"></div>
+
+  <div class="section-title">🎯 Ultimate goal — Phase 19 capstone projects</div>
+  <div class="cap">
+    <h2>Capstone Projects</h2>
+    <p class="note">17 end-to-end products + 9 deep-build tracks. Each lists the phases it draws on — your earlier progress unlocks these. Check one off when you ship it.</p>
+    <p class="locked" id="capLocked"></p>
+    <div class="caplist" id="caplist"></div>
+  </div>
+
+  <footer>Progress saved locally in your browser (localStorage). Served on port 9999.</footer>
+
+<script>
+const PHASES = [
+  {n:0, name:"Setup & Tooling", lessons:12, c:"var(--red)", t:"Dev envs, git, GPU, APIs, Docker, Linux, debugging"},
+  {n:1, name:"Math Foundations", lessons:22, c:"var(--red)", t:"Linear algebra, calculus, probability, optimization, SVD, Fourier"},
+  {n:2, name:"ML Fundamentals", lessons:18, c:"var(--orange)", t:"Regression, trees, SVM, clustering, metrics, ensembles"},
+  {n:3, name:"Deep Learning Core", lessons:13, c:"var(--orange)", t:"Backprop from scratch, optimizers, regularization, PyTorch, JAX"},
+  {n:4, name:"Computer Vision", lessons:28, c:"var(--yellow)", t:"CNNs, detection, segmentation, GANs, diffusion, ViT, CLIP, NeRF"},
+  {n:5, name:"NLP Foundations→Advanced", lessons:29, c:"var(--yellow)", t:"Embeddings, attention, seq2seq, RAG chunking, eval frameworks"},
+  {n:6, name:"Speech & Audio", lessons:17, c:"var(--green)", t:"Spectrograms, ASR, Whisper, TTS, voice cloning, speech-to-speech"},
+  {n:7, name:"Transformers Deep Dive", lessons:16, c:"var(--green)", t:"Self-attention, MHA, RoPE, BERT/GPT/T5, MoE, KV cache, Flash Attn"},
+  {n:8, name:"Generative AI", lessons:15, c:"var(--frost1)", t:"VAEs, GANs, DDPM, latent diffusion, ControlNet, LoRA, flow matching"},
+  {n:9, name:"Reinforcement Learning", lessons:12, c:"var(--frost1)", t:"MDPs, Q-learning, DQN, policy gradients, PPO, RLHF, MARL"},
+  {n:10, name:"LLMs from Scratch", lessons:34, c:"var(--frost2)", t:"Tokenizers, pretrain mini-GPT, SFT, DPO, quantization, DeepSeek-V3"},
+  {n:11, name:"LLM Engineering", lessons:17, c:"var(--frost2)", t:"Prompting, RAG, fine-tuning, function calling, guardrails, MCP"},
+  {n:12, name:"Multimodal AI", lessons:25, c:"var(--frost3)", t:"CLIP, BLIP-2, LLaVA, Qwen-VL, VLAs, ColPali, multimodal agents"},
+  {n:13, name:"Tools & Protocols", lessons:23, c:"var(--frost3)", t:"Function calling, MCP servers/clients, A2A, OTel, security, auth"},
+  {n:14, name:"Agent Engineering", lessons:42, c:"var(--frost4)", t:"Agent loop, ReAct, memory (MemGPT/Mem0), LangGraph, CrewAI, evals"},
+  {n:15, name:"Autonomous Systems", lessons:22, c:"var(--frost4)", t:"Long-horizon agents, self-improvement, kill switches, HITL, RSP"},
+  {n:16, name:"Multi-Agent & Swarms", lessons:25, c:"var(--purple)", t:"Orchestrator-worker, debate, consensus, MARL, agent economies"},
+  {n:17, name:"Infra & Production", lessons:28, c:"var(--purple)", t:"vLLM, autoscaling, quantization, gateways, observability, FinOps"},
+  {n:18, name:"Ethics, Safety & Alignment", lessons:30, c:"var(--red)", t:"Reward hacking, deceptive alignment, red-teaming, watermarking, law"},
+  {n:19, name:"Capstone Projects", lessons:85, c:"var(--green)", t:"17 end-to-end products + 9 deep-build tracks (see goal below)"},
+];
+
+const CAPSTONES = [
+  {t:"Terminal-native coding agent", d:"P0,5,7,10,11,13,14,15,17,18"},
+  {t:"RAG over codebase / cross-repo search", d:"P5,7,11,13,17"},
+  {t:"Real-time voice assistant (ASR→LLM→TTS)", d:"P6,7,11,13,14,17"},
+  {t:"Multimodal document QA (vision-first)", d:"P4,5,7,11,12,17"},
+  {t:"Autonomous research agent", d:"P0,2,3,7,10,14,15,16,18"},
+  {t:"DevOps troubleshooting agent (K8s)", d:"P11,13,14,15,17,18"},
+  {t:"End-to-end fine-tuning pipeline", d:"P2,3,7,10,11,17,18"},
+  {t:"Production RAG chatbot (regulated)", d:"P5,7,11,12,17,18"},
+  {t:"Code migration agent (repo upgrade)", d:"P5,7,11,13,14,15,17"},
+  {t:"Multi-agent software engineering team", d:"P11,13,14,15,16,17"},
+  {t:"LLM observability & eval dashboard", d:"P11,13,17,18"},
+  {t:"Video understanding pipeline", d:"P4,6,7,11,12,17"},
+  {t:"MCP server with registry & governance", d:"P11,13,14,17,18"},
+  {t:"Speculative-decoding inference server", d:"P3,7,10,17"},
+  {t:"Constitutional safety + red-team range", d:"P10,11,13,14,18"},
+  {t:"GitHub issue-to-PR autonomous agent", d:"P11,13,14,15,17"},
+  {t:"Personal AI tutor (adaptive, multimodal)", d:"P5,6,11,12,14,17,18"},
+  {t:"Agent harness loop contract", d:"track", track:1},
+  {t:"Tool registry with schema validation", d:"track", track:1},
+  {t:"Evaluation framework blueprint", d:"track", track:1},
+  {t:"Memory system design", d:"track", track:1},
+  {t:"Autonomous planning harness", d:"track", track:1},
+  {t:"Production observability pipeline", d:"track", track:1},
+  {t:"Voice pipeline (multi-speaker)", d:"track", track:1},
+  {t:"Vision pipeline for real-world images", d:"track", track:1},
+  {t:"Security & compliance toolkit", d:"track", track:1},
+];
+
+const TOTAL_LESSONS = PHASES.reduce((s,p)=>s+p.lessons,0);
+const HOURS_PER_LESSON = 320/TOTAL_LESSONS;
+const KEY="aiefs-progress-v1";
+let state = load();
+
+function load(){ try{return JSON.parse(localStorage.getItem(KEY))||{phases:{},caps:{}}}catch(e){return{phases:{},caps:{}}} }
+function save(){ localStorage.setItem(KEY, JSON.stringify(state)); render(); }
+function done(n){ return state.phases[n]||0; }
+function setDone(n,v,max){ state.phases[n]=Math.max(0,Math.min(max,v)); save(); }
+
+function renderGrid(){
+  const g=document.getElementById('grid'); g.innerHTML='';
+  PHASES.forEach(p=>{
+    const d=done(p.n), pct=Math.round(d/p.lessons*100);
+    const el=document.createElement('div');
+    el.className='card'; el.style.setProperty('--c',p.c);
+    el.innerHTML=`
+      <div class="top"><h3>${p.name}</h3><span class="ph">P${p.n}</span></div>
+      <div class="topics">${p.t}</div>
+      <div class="bar"><span style="width:${pct}%"></span></div>
+      <div class="row">
+        <div class="count"><b>${d}</b> / ${p.lessons} lessons ${d===p.lessons?'<span class="done-badge">✓ done</span>':''}</div>
+        <div class="stepper">
+          <button onclick="setDone(${p.n},${d-1},${p.lessons})">−</button>
+          <button onclick="setDone(${p.n},${d+1},${p.lessons})">+</button>
+          <button class="mark-all" onclick="setDone(${p.n},${d===p.lessons?0:p.lessons},${p.lessons})">${d===p.lessons?'clear':'all'}</button>
+        </div>
+      </div>`;
+    g.appendChild(el);
+  });
+}
+
+function toggleCap(i){ state.caps[i]=!state.caps[i]; save(); }
+
+function renderCaps(){
+  const l=document.getElementById('caplist'); l.innerHTML='';
+  CAPSTONES.forEach((c,i)=>{
+    const checked=!!state.caps[i];
+    const el=document.createElement('div');
+    el.className='capitem'+(checked?' checked':'');
+    el.innerHTML=`<input type="checkbox" ${checked?'checked':''} onchange="toggleCap(${i})" id="cap${i}">
+      <label for="cap${i}">${c.t}${c.track?'<span class="track-tag">track</span>':''}
+      <span class="deps">${c.track?'multi-lesson deep-build':'needs '+c.d}</span></label>`;
+    l.appendChild(el);
+  });
+}
+
+function renderStats(){
+  const lessonsDone=PHASES.reduce((s,p)=>s+done(p.n),0);
+  const phasesDone=PHASES.filter(p=>done(p.n)===p.lessons).length;
+  const capsDone=Object.values(state.caps).filter(Boolean).length;
+  const pct=Math.round(lessonsDone/TOTAL_LESSONS*100);
+  document.getElementById('ring').style.setProperty('--p',pct);
+  document.getElementById('ringPct').textContent=pct+'%';
+  document.getElementById('sLessons').textContent=`${lessonsDone} / ${TOTAL_LESSONS}`;
+  document.getElementById('sPhases').textContent=`${phasesDone} / 20`;
+  document.getElementById('sHours').textContent=Math.round(lessonsDone*HOURS_PER_LESSON)+'h';
+  document.getElementById('sCap').textContent=`${capsDone} / 26`;
+
+  // capstone readiness hint
+  const coreDone = [11,13,14].every(n=>done(n)/PHASES.find(p=>p.n===n).lessons >= 0.5);
+  const lk=document.getElementById('capLocked');
+  if(!coreDone){ lk.style.display='block';
+    lk.textContent='💡 Tip: get through at least half of Phases 11 (LLM Eng), 13 (Tools/MCP) and 14 (Agents) before attempting most capstones.'; }
+  else lk.style.display='none';
+}
+
+function render(){ renderGrid(); renderCaps(); renderStats(); }
+
+function exportData(){
+  const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='aiefs-progress.json'; a.click();
+}
+function resetData(){ if(confirm('Reset all progress?')){ state={phases:{},caps:{}}; save(); } }
+
+render();
+</script>
+</body>
+</html>
