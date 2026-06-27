@@ -87,6 +87,21 @@
   .capitem label{cursor:pointer}
   .track-tag{display:inline-block;font-size:10px;background:var(--frost4);color:var(--nord6);
     border-radius:4px;padding:1px 5px;margin-left:4px;vertical-align:middle}
+  /* pm2 panel */
+  .pm2{background:var(--nord1);border:1px solid var(--nord2);border-radius:12px;padding:8px 4px;overflow-x:auto}
+  .pm2 table{width:100%;border-collapse:collapse;font-size:13px}
+  .pm2 th{text-align:left;color:var(--nord3);font-weight:600;font-size:11px;text-transform:uppercase;
+    letter-spacing:.5px;padding:8px 14px;border-bottom:1px solid var(--nord2)}
+  .pm2 td{padding:10px 14px;border-bottom:1px solid var(--nord2);color:var(--nord4)}
+  .pm2 tr:last-child td{border-bottom:none}
+  .pm2 .name{color:var(--nord6);font-weight:600}
+  .pm2 .port{font-family:ui-monospace,monospace;color:var(--frost2)}
+  .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:middle}
+  .dot.online{background:var(--green)} .dot.stopped,.dot.errored{background:var(--red)}
+  .dot.unknown{background:var(--nord3)}
+  .pm2-empty{padding:16px;color:var(--nord3);font-size:13px;text-align:center}
+  .pm2-head{display:flex;justify-content:space-between;align-items:center;padding:4px 12px 2px}
+  .pm2-head .live{font-size:11px;color:var(--green)}
   footer{margin-top:30px;color:var(--nord3);font-size:12px;text-align:center}
 </style>
 </head>
@@ -153,7 +168,13 @@
     <div class="caplist" id="caplist"></div>
   </div>
 
-  <footer>Progress saved locally in your browser (localStorage). Served on port 9999.</footer>
+  <div class="section-title">⚙️ Hosted services · live PM2 status</div>
+  <div class="pm2">
+    <div class="pm2-head"><span class="live" id="pm2Live">● live</span><span class="pm2-empty" id="pm2Ts" style="padding:0"></span></div>
+    <div id="pm2panel"><div class="pm2-empty">connecting to PM2…</div></div>
+  </div>
+
+  <footer>Progress saved locally in your browser (localStorage). Served by PM2 on port 9999.</footer>
 
 <script>
 const PHASES = [
@@ -285,6 +306,43 @@ function exportData(){
 function resetData(){ if(confirm('Reset all progress?')){ state={phases:{},caps:{}}; save(); } }
 
 render();
+
+// --- live PM2 status (served by server.js /api/pm2) ---
+function fmtUptime(ms){
+  if(!ms) return '—'; let s=Math.floor((Date.now()-ms)/1000);
+  const d=Math.floor(s/86400);s%=86400;const h=Math.floor(s/3600);s%=3600;const m=Math.floor(s/60);
+  if(d) return d+'d '+h+'h'; if(h) return h+'h '+m+'m'; if(m) return m+'m'; return s+'s';
+}
+function fmtMem(b){ return b?(b/1048576).toFixed(1)+' MB':'—'; }
+async function loadPM2(){
+  const panel=document.getElementById('pm2panel'), live=document.getElementById('pm2Live');
+  try{
+    const r=await fetch('/api/pm2',{cache:'no-store'}); const apps=await r.json();
+    if(!Array.isArray(apps)) throw new Error('bad');
+    live.textContent='● live'; live.style.color='var(--green)';
+    document.getElementById('pm2Ts').textContent='updated '+new Date().toLocaleTimeString();
+    if(!apps.length){ panel.innerHTML='<div class="pm2-empty">No apps under PM2.</div>'; return; }
+    let rows=apps.map(a=>{
+      const st=(a.status||'unknown').toLowerCase();
+      return `<tr>
+        <td class="name">${a.name}</td>
+        <td><span class="dot ${st}"></span>${a.status||'?'}</td>
+        <td class="port">${a.port?(':'+a.port):'—'}</td>
+        <td>${fmtUptime(a.uptime)}</td>
+        <td>${a.restarts}</td>
+        <td>${a.cpu!=null?a.cpu+'%':'—'}</td>
+        <td>${fmtMem(a.memory)}</td>
+        <td>${a.pid||'—'}</td></tr>`;
+    }).join('');
+    panel.innerHTML=`<table><thead><tr>
+      <th>App</th><th>Status</th><th>Port</th><th>Uptime</th><th>↺</th><th>CPU</th><th>Memory</th><th>PID</th>
+      </tr></thead><tbody>${rows}</tbody></table>`;
+  }catch(e){
+    live.textContent='● offline'; live.style.color='var(--red)';
+    panel.innerHTML='<div class="pm2-empty">PM2 API unreachable (open the dashboard via the PM2-served port 9999, not file://).</div>';
+  }
+}
+loadPM2(); setInterval(loadPM2, 5000);
 </script>
 </body>
 </html>

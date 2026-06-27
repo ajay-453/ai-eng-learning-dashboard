@@ -13,19 +13,27 @@ curriculum — 503 lessons across 20 phases (~320 hours) — all the way to a Ph
 - **Capstone tracker** — the 17 end-to-end products + 9 deep-build tracks as checkboxes, each labeled with the phases it draws on, plus a readiness hint.
 - **Overall progress** — completion ring, lessons done, phases completed, estimated hours invested, capstones shipped.
 - **Local persistence** — progress is saved in your browser's `localStorage`. **Export** dumps JSON; **Reset** clears it.
+- **Live PM2 panel** — a "Hosted services" table shows what PM2 is running (app, status, port, uptime, CPU, memory), refreshed every 5s via the `/api/pm2` endpoint.
 
-No build step, no dependencies, no backend — it's one `index.html`.
+The UI is a single `index.html` (no build step). A tiny dependency-free Node server (`server.js`) serves it and exposes the PM2 status endpoint.
 
 ## Run it
 
-Any static file server works. With Python:
+Recommended — under [PM2](https://pm2.keymetrics.io/) (also powers the live status panel):
 
 ```bash
-python3 -m http.server 9999
+pm2 start ecosystem.config.js && pm2 save
 # open http://localhost:9999
 ```
 
-Or just open `index.html` directly in a browser.
+Or directly (requires Node ≥ 18):
+
+```bash
+node server.js          # serves on PORT (default 9999) + /api/pm2
+```
+
+> The progress tracker also works from a plain static server or `file://`, but the
+> live PM2 panel only appears when served by `server.js` (it needs the `/api/pm2` endpoint).
 
 ### Run it as a persistent service (Linux / systemd)
 

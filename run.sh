@@ -10,7 +10,7 @@ UNIT="$HOME/.config/systemd/user/${NAME}.service"
 case "${1:-serve}" in
   serve)
     echo "Serving on http://localhost:${PORT} (Ctrl-C to stop)"
-    exec python3 -m http.server "$PORT" --bind 0.0.0.0 --directory "$DIR"
+    cd "$DIR" && exec env PORT="$PORT" node server.js
     ;;
   install)
     mkdir -p "$(dirname "$UNIT")"
@@ -22,7 +22,8 @@ After=network.target
 [Service]
 Type=simple
 WorkingDirectory=${DIR}
-ExecStart=/usr/bin/python3 -m http.server ${PORT} --bind 0.0.0.0
+Environment=PORT=${PORT}
+ExecStart=$(command -v node) ${DIR}/server.js
 Restart=always
 RestartSec=3
 

@@ -11,10 +11,8 @@ module.exports = {
   apps: [
     {
       name: 'ai-eng-dashboard',
-      script: 'python3',
-      args: '-m http.server 9999 --bind 0.0.0.0',
+      script: 'server.js',     // serves the dashboard + /api/pm2 status endpoint
       cwd: __dirname,
-      interpreter: 'none',     // run python3 directly, not via node
       autorestart: true,
       max_restarts: 10,
       env: { PORT: '9999' },

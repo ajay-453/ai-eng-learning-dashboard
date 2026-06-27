@@ -7,7 +7,7 @@ Update this **and** `ecosystem.config.js` together whenever you add or remove a 
 
 | Port | Service            | Manager | Project                   | Notes                          |
 |------|--------------------|---------|---------------------------|--------------------------------|
-| 9999 | ai-eng-dashboard   | PM2     | ai-eng-learning-dashboard | Static learning dashboard      |
+| 9999 | ai-eng-dashboard   | PM2     | ai-eng-learning-dashboard | Dashboard + live `/api/pm2` status endpoint |
 
 ## Reserved / system ports (do not reuse)
 
